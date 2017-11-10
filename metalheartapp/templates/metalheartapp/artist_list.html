@@ -1,0 +1,9 @@
+{% if artist_list %}
+    <ul>
+    {% for artist in artist_list %}
+        <li><p>{{artist.name}}</p></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No artist found.</p>
+{% endif %}

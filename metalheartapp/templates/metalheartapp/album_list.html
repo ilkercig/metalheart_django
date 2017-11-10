@@ -1,0 +1,9 @@
+{% if album_list %}
+    <ul>
+    {% for album in album_list %}
+        <li><p>{{album.name}}</p></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No album found.</p>
+{% endif %}
