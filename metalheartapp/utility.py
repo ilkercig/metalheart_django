@@ -5,7 +5,7 @@ def remove_parenthesis(text):
     return re.sub(r"\(.+\)$", "", text)
 
 def remove_ellipsis(text):
-    return re.sub(r"\.+$", "", text)
+    return re.sub(r"[\u2026\.]+$", "", text)
 
 
 def remove_redundant_chars(text):

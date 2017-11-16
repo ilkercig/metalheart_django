@@ -27,7 +27,13 @@ def save_nonmetal_artist(spotify_id, name):
 def get_all_artist():
     return Artist.objects.all()
 
-def get_artist(spotify_id):
+def filter_artist(spotify_id):
     return Artist.objects.filter(spotify_id = spotify_id)
+def get_artist(spotify_id):
+    return Artist.objects.get(spotify_id = spotify_id)
+
+
+def filter_nonmetal_artist(spotify_id):
+    return NonMetalArtist.objects.filter(spotify_id = spotify_id)
 
     

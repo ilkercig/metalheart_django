@@ -13,7 +13,7 @@ SPOTIFY_API = spotify.Authorization()
 
 
 def index(request):
-    SPOTIFY_API.init_with_session(request.session)
+    SPOTIFY_API.set_token_with_session(request.session)
     template = loader.get_template('metalheartapp/index.html')
     if SPOTIFY_API.logged_in:
         context = {'acces_token': SPOTIFY_API.access_token}
@@ -54,36 +54,34 @@ def login(request):
     return HttpResponseRedirect(auth_url)
 
 
-def album_list(request):
-    SPOTIFY_API.init_with_session(request.session)
-    template = loader.get_template('metalheartapp/album_list.html')
-    album_list = SPOTIFY_API.get_user_albums(request.session, 10)
-    context = {'album_list': album_list}
-    return HttpResponse(template.render(context, request))
 
-
-def artist_list(request):
-    SPOTIFY_API.init_with_session(request.session)
-    template = loader.get_template('metalheartapp/artist_list.html')
-    artist_list = SPOTIFY_API.get_users_all_artists(request.session)
-    context = {'artist_list': artist_list}
-    return HttpResponse(template.render(context, request))
-
-
-def change_thisname(request):
-    SPOTIFY_API.init_with_session(request.session)
-    template = loader.get_template('metalheartapp/change_thisname.html')
-    artist_list = SPOTIFY_API.get_users_all_artists(request.session)
-    finder.find_and_save_artists(SPOTIFY_API, request.session, artist_list)
-    context = {'artist': 's'}
-    return HttpResponse(template.render(context, request))
-
-
-def match_test(request):
+def test_FindArtist(request):
     #TODO: Implement a test for unmatching artists
     artist_id = "6toR2I8BssfcGNJWkL2S0W"
-    SPOTIFY_API.init_with_session(request.session)
+    SPOTIFY_API.set_token_with_session(request.session)
     s_artist = SPOTIFY_API.get_artist(request.session,artist_id)
     x = finder.Finder(s_artist, SPOTIFY_API, request.session)
     ma_artist = x.find_artist()
     return HttpResponse(ma_artist.name)
+
+def test_ArtistAlbums(request):
+    artist_id = "2nJopqKVXGa0RHy0t3DypB"
+    template = loader.get_template('metalheartapp/album_list.html')
+    SPOTIFY_API.set_token_with_session(request.session)
+    album_list = SPOTIFY_API.get_artist_all_albums(artist_id, request.session)
+    context = {'album_list': album_list}
+    return HttpResponse(template.render(context, request))
+
+def test_UserArtists(request):
+    template = loader.get_template('metalheartapp/artist_list.html')
+    SPOTIFY_API.set_token_with_session(request.session)
+    artist_list = SPOTIFY_API.get_users_all_artists(request.session)
+    context = {'artist_list': artist_list}
+    return HttpResponse(template.render(context, request))
+
+def test_UserAlbums(request):
+    template = loader.get_template('metalheartapp/album_list.html')
+    SPOTIFY_API.set_token_with_session(request.session)
+    album_list = SPOTIFY_API.get_users_all_albums(request.session)
+    context = {'album_list': album_list}
+    return HttpResponse(template.render(context, request))

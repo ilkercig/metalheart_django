@@ -79,8 +79,11 @@ def search_and_filter_band(name):
         search_results = data['data']['search_results']
         for item in search_results:
             if compare_artist_name(name, item['name']):
-                band = get_band(item['id'])
-                band_list.append(band)
+                try:
+                    band = get_band(item['id'])
+                    band_list.append(band)
+                except KeyError as err:
+                    print("KeyError for artist: %s in key: %s" % (item['name'], err.args[0]))
     return band_list
 
 

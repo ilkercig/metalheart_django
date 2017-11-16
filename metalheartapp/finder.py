@@ -3,7 +3,17 @@ from . import spotify
 from . import persistence
 import logging
 import unidecode
+import urllib.parse as urllibparse
 
+class FinderResult(object):
+    def __init__(self):
+        self.saved = 0
+        self.saved_nonmetal = 0
+        self.existing = 0
+        self.existing_nonmetal = 0
+        self.artist_list = []
+    def add_artist(self,artist):
+        self.artist_list.append(artist)
 
 class Finder(object):
     """ For finding spotify artist in metal archives"""
@@ -43,24 +53,71 @@ class Finder(object):
         for s_album in self.s_discography:
             for ma_album in ma_albums:
                 if(self._compare_album_names(s_album.name, ma_album.name)):
-                    return True
+                    return True        
+        return self._check_next_albums(ma_albums)
+
+
+    def _check_next_albums(self, ma_albums):
+        """ Hardcore optimization """
+        while self.s_artist.is_albums_extendable():
+            next_albums = self.s_artist.next_albums(self.session, self.auth)
+            for s_album in next_albums:
+                for ma_album in ma_albums:
+                    if(self._compare_album_names(s_album.name, ma_album.name)):
+                        return True
         return False
+            
 
 
 
 
 
-def find_and_save_artists(auth, session, s_artist_list):
+def find_and_save_artists(auth, session, s_artist_list, result):
     for s_artist in s_artist_list:
-        if not persistence.get_artist(s_artist.artist_id):
-            finder = Finder(s_artist, auth, session)
-            ma_band = finder.find_artist() 
-            if(ma_band is not None):
-                persistence.save_artist(s_artist, ma_band)
-            else:
-                persistence.save_nonmetal_artist(s_artist.artist_id ,s_artist.name)
+        if persistence.filter_artist(s_artist.artist_id):
+            result.existing += 1
+            result.add_artist(persistence.get_artist(s_artist.artist_id))
+        else:
+            if persistence.filter_nonmetal_artist(s_artist.artist_id):
+                result.existing_nonmetal += 1
+            else:               
+                finder = Finder(s_artist, auth, session)
+                ma_band = finder.find_artist() 
+                if(ma_band is not None):
+                    persistence.save_artist(s_artist, ma_band)
+                    result.saved += 1
+                    result.add_artist( persistence.get_artist(s_artist.artist_id))
+                else:
+                    persistence.save_nonmetal_artist(s_artist.artist_id ,s_artist.name)
+                    result.saved_nonmetal +=1 
+
+def is_exist_in_db(s_artist):
+    return persistence.filter_artist(s_artist.artist_id) or persistence.filter_nonmetal_artist(s_artist.artist_id)
+
+def find_artists(auth, session):
+    """ da """
+    offset = 0
+    limit = 50
+    artist_list = []
+    result = FinderResult()
+    artist_list, next_query = auth.get_user_artists_and_next(
+        session, limit, offset)
+    total = len(artist_list)
+    find_and_save_artists(auth, session, artist_list, result)
+    print("total artist: ", total)
+    while next_query is not None:
+        limit, offset = parse_next_query(next_query)
+        next_artists, next_query = auth.get_user_artists_and_next(
+            session, int(limit), int(offset))
+        find_and_save_artists(auth, session, next_artists,result)
+        total += len(next_artists)
+    return result
 
 
 
-
-
+def parse_next_query(next_query):
+    result = urllibparse.urlparse(next_query)
+    params = urllibparse.parse_qs(result.query)
+    offset, limit = params['offset'][0], params['limit'][0]
+    return limit, offset
+    
