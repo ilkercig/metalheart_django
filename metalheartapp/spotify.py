@@ -10,7 +10,7 @@ from enum import Enum
 AUTH_URL = 'https://accounts.spotify.com/authorize'
 CLIENT_ID = 'e1a3ac15261445d39bae81dd74284012'
 CLIENT_SECRET = 'c49321b03c874a549e305550475067a9'
-REDIRECT_URL = 'http://localhost:8000/callback'
+REDIRECT_URL = 'http://127.0.0.1:8000/callback'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 USER_ALBUMS = 'https://api.spotify.com/v1/me/albums'
 GET_ARTIST = 'https://api.spotify.com/v1/artists/'
@@ -79,9 +79,6 @@ class Authorization(object):
         self.state = None
         self.expire_time = None
 
-
-
-
 #--------Set Attributes------------------------------
     def set_token_with_session(self, session):
         if session:
@@ -119,8 +116,6 @@ class Authorization(object):
         session['refresh_token'] = self.refresh_token
         session['token_type'] = self.token_type
         session['expire_time'] = time.mktime(self.expire_time.timetuple()) 
-
-#----------------------------------------------------
 
 #--------API CALL-------------------------------------
     def _get_user_albums_data(self, session, limit, offset=None):
@@ -176,9 +171,6 @@ class Authorization(object):
             return data
         else:
             return None
-
-#------------------------------------------------------
-
 
 #--------Public Function-------------------------------
     def get_authorize_url(self):
@@ -303,8 +295,7 @@ class Authorization(object):
             album_list.extend(next_albums)
         return album_list
 
-
-#------------------------------------------------------
+#---------Private--------------------------------------
 
 
 

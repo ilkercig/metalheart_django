@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Metal Heart - {% block title %}How to Tango with Django!{% endblock %}</title>
+    </head>
+
+    <body>
+
+            <div>
+                    <ul>
+                    {% if logged_in %}
+                        <li><a href="logout">Logout</a></li>
+                    {% else %}
+                        <li><a href="login">Login</a></li>
+                    {% endif %}
+        
+                        <li><a href="about/">About</a></li>
+                    </ul>
+                </div>
+
+        <div>
+            {% block body_block %}{% endblock %}
+        </div>
+
+        <hr />
+
+
+    </body>
+</html>

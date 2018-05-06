@@ -15,11 +15,12 @@ SPOTIFY_API = spotify.Authorization()
 def index(request):
     SPOTIFY_API.set_token_with_session(request.session)
     template = loader.get_template('metalheartapp/index.html')
-    if SPOTIFY_API.logged_in:
-        context = {'acces_token': SPOTIFY_API.access_token}
-        return HttpResponse(template.render(context, request))
-    else:
-        return HttpResponse(template.render())
+    context = {'acces_token': SPOTIFY_API.access_token, 'logged_in' : SPOTIFY_API.logged_in}
+    return HttpResponse(template.render(context, request))
+
+def logout(request):
+     SPOTIFY_API.clear_session(request.session)
+     return HttpResponseRedirect("/")
 
 
 def render_error_view(request, error=None, status_code=None):
@@ -85,3 +86,6 @@ def test_UserAlbums(request):
     album_list = SPOTIFY_API.get_users_all_albums(request.session)
     context = {'album_list': album_list}
     return HttpResponse(template.render(context, request))
+
+def Check_And_Save_User_Artists(request):
+    template = loader.get_template('metalheartapp/album_list.html')
