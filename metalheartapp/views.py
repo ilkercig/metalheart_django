@@ -8,19 +8,20 @@ from .middleware import SpotifySessionMiddleware
 from django.template import loader
 from . import spotify
 from . import finder
+from . import metal_archives
+from django.template.response import TemplateResponse
 
-SPOTIFY_API = spotify.Authorization()
-
+AUTH_STATE = ""
 
 def index(request):
-    SPOTIFY_API.set_token_with_session(request.session)
-    template = loader.get_template('metalheartapp/index.html')
-    context = {'acces_token': SPOTIFY_API.access_token, 'logged_in' : SPOTIFY_API.logged_in}
-    return HttpResponse(template.render(context, request))
+    return TemplateResponse(request, 'metalheartapp/index.html', {})
 
 def logout(request):
-     SPOTIFY_API.clear_session(request.session)
-     return HttpResponseRedirect("/")
+    del request.session['acces_token']
+    del request.session['refresh_token']
+    del request.session['token_type']
+    del request.session['expire_time']
+    return HttpResponseRedirect("/")
 
 
 def render_error_view(request, error=None, status_code=None):
@@ -33,7 +34,10 @@ def callback(request):
     if(request.GET.__contains__('code')):
         code = request.GET['code']
         state = request.GET['state']
-        result, status_code = SPOTIFY_API.get_access_token(code, state, request.session)
+        if(AUTH_STATE != state):
+            return render_error_view(request, "TODO: put error message", 500)
+        spotify_api = spotify.Authorization(request.session)
+        result, status_code = spotify_api.get_access_token(code, state)
         if result:
             if 'callback_url' in request.session:
                 return HttpResponseRedirect(request.session['callback_url'])
@@ -47,43 +51,50 @@ def callback(request):
 
 
 def login(request):
-    state = ''.join(random.choices(
-        string.ascii_uppercase + string.digits, k=10))
-    SPOTIFY_API.clear_session(request.session)
-    SPOTIFY_API.state = state
-    auth_url = SPOTIFY_API.get_authorize_url()
+    global AUTH_STATE
+    AUTH_STATE = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    auth_url = spotify.get_authorize_url(AUTH_STATE, True)
     return HttpResponseRedirect(auth_url)
+
+def init(request):
+    result = {}
+    spotify_api = spotify.Authorization(request.session)
+    artist_list = spotify_api.get_users_all_artists()
+    finder.find_and_save_artists(spotify_api, artist_list, result )
 
 
 
 def test_FindArtist(request):
     #TODO: Implement a test for unmatching artists
     artist_id = "6toR2I8BssfcGNJWkL2S0W"
-    SPOTIFY_API.set_token_with_session(request.session)
-    s_artist = SPOTIFY_API.get_artist(request.session,artist_id)
-    x = finder.Finder(s_artist, SPOTIFY_API, request.session)
+    spotify_api = spotify.Authorization(request.session)
+    s_artist = spotify_api.get_artist(artist_id)
+    x = finder.Finder(s_artist, spotify_api)
     ma_artist = x.find_artist()
     return HttpResponse(ma_artist.name)
 
 def test_ArtistAlbums(request):
-    artist_id = "2nJopqKVXGa0RHy0t3DypB"
-    template = loader.get_template('metalheartapp/album_list.html')
-    SPOTIFY_API.set_token_with_session(request.session)
-    album_list = SPOTIFY_API.get_artist_all_albums(artist_id, request.session)
-    context = {'album_list': album_list}
-    return HttpResponse(template.render(context, request))
+    data = metal_archives.make_search_request('death')
+    data = metal_archives.parse_raw_search_results(data)
+    metal_archives.create_band(data)
+    
+    # artist_id = "2nJopqKVXGa0RHy0t3DypB"
+    # template = loader.get_template('metalheartapp/album_list.html')
+    # album_list = SPOTIFY_API.get_artist_all_albums(artist_id, request.session)
+    # context = {'album_list': album_list}
+    # return HttpResponse(template.render(context, request))
 
 def test_UserArtists(request):
     template = loader.get_template('metalheartapp/artist_list.html')
-    SPOTIFY_API.set_token_with_session(request.session)
-    artist_list = SPOTIFY_API.get_users_all_artists(request.session)
+    spotify_api = spotify.Authorization(request.session)
+    artist_list = spotify_api.get_users_all_artists(request.session)
     context = {'artist_list': artist_list}
     return HttpResponse(template.render(context, request))
 
 def test_UserAlbums(request):
     template = loader.get_template('metalheartapp/album_list.html')
-    SPOTIFY_API.set_token_with_session(request.session)
-    album_list = SPOTIFY_API.get_users_all_albums(request.session)
+    spotify_api = spotify.Authorization(request.session)
+    album_list = spotify_api.get_users_all_albums(request.session)
     context = {'album_list': album_list}
     return HttpResponse(template.render(context, request))
 

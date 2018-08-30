@@ -6,7 +6,6 @@ class SpotifySessionMiddleware(object):
         self.get_response = get_response
         self.restricted_views = ["index", "login","callback" ]
 
-
     def __call__(self, request):
         return self.get_response(request)
     
@@ -18,8 +17,15 @@ class SpotifySessionMiddleware(object):
                 request.session['callback_url'] = request.path
                 return HttpResponseRedirect("/login")
 
+    def process_template_response(self, request, response):
+        if IsSessionActive(request.session):
+            response.context_data['acces_token'] = request.session["acces_token"]
+            response.context_data['logged_in'] = True
+        return response
+
+
 def IsSessionActive(session):
-    if not 'acces_token' in session:
-        return False
-    else:
+    if 'acces_token' in session and session["acces_token"] is not None:
         return True
+    else:
+        return False
