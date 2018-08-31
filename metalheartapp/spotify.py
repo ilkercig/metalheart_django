@@ -75,7 +75,7 @@ class Authorization(object):
         self.session = session
 
     def _update_session(self, token_info):
-        self.session['acces_token'] = token_info['access_token']
+        self.session['access_token'] = token_info['access_token']
         if "refresh_token" in token_info:
             self.session['refresh_token'] = token_info['refresh_token']
         self.session['token_type'] = token_info['token_type']

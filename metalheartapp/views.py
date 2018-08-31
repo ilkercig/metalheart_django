@@ -17,7 +17,7 @@ def index(request):
     return TemplateResponse(request, 'metalheartapp/index.html', {})
 
 def logout(request):
-    del request.session['acces_token']
+    del request.session['access_token']
     del request.session['refresh_token']
     del request.session['token_type']
     del request.session['expire_time']
@@ -74,9 +74,7 @@ def test_FindArtist(request):
     return HttpResponse(ma_artist.name)
 
 def test_ArtistAlbums(request):
-    data = metal_archives.make_search_request('death')
-    data = metal_archives.parse_raw_search_results(data)
-    metal_archives.create_band(data)
+    data = metal_archives.make_search_request('hammer')
     
     # artist_id = "2nJopqKVXGa0RHy0t3DypB"
     # template = loader.get_template('metalheartapp/album_list.html')
@@ -85,11 +83,11 @@ def test_ArtistAlbums(request):
     # return HttpResponse(template.render(context, request))
 
 def test_UserArtists(request):
-    template = loader.get_template('metalheartapp/artist_list.html')
     spotify_api = spotify.Authorization(request.session)
-    artist_list = spotify_api.get_users_all_artists(request.session)
-    context = {'artist_list': artist_list}
-    return HttpResponse(template.render(context, request))
+    artist_list = spotify_api.get_user_artists_and_next(10)
+    genre_finder = finder.Finder(artist_list[0][0], spotify_api)
+    result = genre_finder.find_artist()
+    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': artist_list[0]})
 
 def test_UserAlbums(request):
     template = loader.get_template('metalheartapp/album_list.html')

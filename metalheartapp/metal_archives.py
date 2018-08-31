@@ -12,7 +12,7 @@ def make_search_request(keyword):
     urlparams = urllibparse.urlencode(payload)
     response = requests.get("%s?%s" % (BAND_SEARCH_URL, urlparams))
     if response.status_code == 200:
-        return response
+        return parse_raw_search_results(response)
     else:
         return None
 
@@ -25,12 +25,15 @@ def parse_raw_search_results(data):
     result = data["aaData"]
     if totalRecords < 0:
         return None
-    elif totalRecords == 1:
-        soup = BeautifulSoup(result[0][0])
-        for link in soup.findAll('a'):
-            return link.get('href')
     else:
-        return None
+        resultList = []
+        for item in result:
+            soup = BeautifulSoup(item[0])
+            link = soup.findAll('a')[0].get('href')
+            genres = item[1]
+            resultList.append((link, genres))
+        return resultList
+                
 
 def create_band(band_url):
     """Get band data from metal archives and create Band object """

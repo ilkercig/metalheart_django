@@ -19,13 +19,13 @@ class SpotifySessionMiddleware(object):
 
     def process_template_response(self, request, response):
         if IsSessionActive(request.session):
-            response.context_data['acces_token'] = request.session["acces_token"]
+            response.context_data['access_token'] = request.session["access_token"]
             response.context_data['logged_in'] = True
         return response
 
 
 def IsSessionActive(session):
-    if 'acces_token' in session and session["acces_token"] is not None:
+    if 'access_token' in session and session["access_token"] is not None:
         return True
     else:
         return False
