@@ -32,7 +32,7 @@ def parse_raw_search_results(data):
             link = soup.findAll('a')[0].get('href')
             genres = item[1]
             resultList.append((link, genres))
-        return resultList
+    data["data"] = resultList
                 
 
 def create_band(band_url):

@@ -8,6 +8,8 @@ from .middleware import SpotifySessionMiddleware
 from django.template import loader
 from . import spotify
 from . import finder
+from . import artist_controller
+
 from . import metal_archives
 from django.template.response import TemplateResponse
 
@@ -84,10 +86,8 @@ def test_ArtistAlbums(request):
 
 def test_UserArtists(request):
     spotify_api = spotify.Authorization(request.session)
-    artist_list = spotify_api.get_user_artists_and_next(10)
-    genre_finder = finder.Finder(artist_list[0][0], spotify_api)
-    result = genre_finder.find_artist()
-    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': artist_list[0]})
+    result = artist_controller.get_user_metal_artists(spotify_api)
+    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': result})
 
 def test_UserAlbums(request):
     template = loader.get_template('metalheartapp/album_list.html')
