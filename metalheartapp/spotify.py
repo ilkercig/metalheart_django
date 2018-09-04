@@ -27,28 +27,26 @@ class Artist(object):
     def __init__(self, artist_id, name):
         self.artist_id = artist_id
         self.name = utility.remove_redundant_chars(name)
-        self.__albums = []
-        self.next_query = None
+        self.__discography = []
+        self.__next_discography_offset = 0
+        self.__discography_request_limit = 50
 
-    def get_albums(self, auth):       
-        if self.__albums == []:
-            albums, self.next_query = auth.get_artist_albums_and_next(self.artist_id, 50)
+    def get_discography(self, auth):       
+        if self.__discography == []:
+            albums, self.__next_discography_offset = auth.get_artist_discography_and_next_offset(self.artist_id, self.__discography_request_limit)
             for item in albums:
                 item.name = utility.remove_redundant_chars(item.name)
-            self.__albums = albums
-        return self.__albums
+            self.__discography = albums
+            self.__discography_request_limit
+        return self.__discography
 
     def is_albums_extendable(self):
-        if self.next_query:
-            return True
-        else:
-            return False
+        self.__next_discography_offset is not None
 
     def next_albums(self, auth):
-        if self.next_query:
-            limit, offset = parse_next_query(self.next_query)
-            albums, self.next_query = auth.get_artist_albums_and_next(self.artist_id, int(limit), int(offset))
-            self.__albums = self.__albums.extend(albums)
+        if self.__next_discography_offset:
+            albums, self.__next_discography_offset = auth.get_artist_discography_and_next(self.artist_id, self.__discography_request_limit, self.__next_discography_offset)
+            self.__discography.extend(albums)
             return albums
 
 class Album(object):
@@ -84,11 +82,9 @@ class Authorization(object):
         self.session['expire_time'] = time.mktime(expire_time.timetuple()) 
 
 #--------API CALL-------------------------------------
-    def _get_user_albums_data(self, limit, offset=None):
+    def _get_user_saved_albums(self, limit, offset=0):
         self._check_acces_token()
-        payload = {'limit': limit}
-        if offset is not None:
-            payload['offset'] = offset
+        payload = {'limit': limit, 'offset': offset}
         urlparams = urllibparse.urlencode(payload)
         headers = self._make_headers()
         headers['Content-Type'] = 'application/json'
@@ -100,7 +96,6 @@ class Authorization(object):
             return data
         else:
             return None
-
 
     def _get_acces_token(self, code):
         """make a request to get refresh and acces token """
@@ -118,13 +113,11 @@ class Authorization(object):
 
         return response.status_code
         
-    def _get_artist_albums(self, artist_id, limit, offset = None):
+    def _get_artist_discography(self, artist_id, limit, offset = 0):
         self._check_acces_token()
         headers = self._make_headers()
         headers['Content-Type'] = 'application/json'
-        payload = {'limit': limit, "album_type": "single,album,compilation"}
-        if offset is not None:
-            payload['offset'] = offset
+        payload = {'limit': limit, "album_type": "single,album,compilation", "offset" : offset}
         urlparams = urllibparse.urlencode(payload)
         response = requests.get("%s?%s" % (
             GET_ARTIST + artist_id + '/albums', urlparams), headers=headers)
@@ -145,16 +138,6 @@ class Authorization(object):
         else:
             return False, status_code
 
-
-
-    def get_artist_albums_and_next(self, artist_id, limit, offset = None ):
-        data = self._get_artist_albums(artist_id, limit, offset )
-        album_list = []
-        if data:
-            for item in data['items']:
-                album_list.append(Album(item['id'], item['name']))
-        return album_list, data['next']
-
     def get_artist(self, artist_id):
         self._check_acces_token()
         headers = self._make_headers()
@@ -167,84 +150,80 @@ class Authorization(object):
         else:
             return None
 
-    def get_users_all_artists(self):
+    def get_users_all_saved_artists(self, limit = 50):
         """ Get users all saved artists """
         self._check_acces_token()
-        offset = 0
-        limit = 50
-        artist_list = []
-        artist_list, next_query = self.get_user_artists_and_next(limit, offset)
-        while next_query is not None:
-            limit, offset = parse_next_query(next_query)
-            next_artists, next_query = self.get_user_artists_and_next(
-                int(limit), int(offset))
+        artist_list, next_offset = self.get_user_saved_artists_and_next_offset(limit)
+        while next_offset is not None:
+            next_artists, next_offset = self.get_user_saved_artists_and_next_offset(
+                limit, next_offset)
             artist_list.extend(next_artists)
         return artist_list
 
-    def get_users_all_albums(self):
+    def get_users_all_saved_albums(self, limit = 50):
         """ Get users all saved albums """
         self._check_acces_token()
-        offset = 0
-        limit = 50
-        album_list = []
-        album_list, next_query = self.get_user_albums_and_next(
-            limit, offset)
-        while next_query is not None:
-            limit, offset = parse_next_query(next_query)
-            next_albums, next_query = self.get_user_albums_and_next(
-                int(limit), int(offset))
+        album_list, next_offset = self.get_user_saved_albums_and_next_offset(limit)
+        while next_offset is not None:
+            next_albums, next_offset = self.get_user_saved_albums_and_next_offset(
+                limit, next_offset)
             album_list.extend(next_albums)
         return album_list
 
-    def get_user_albums_and_next(self, limit, offset=None):
+    def get_artist_all_discography(self, artist_id, limit = 50):
+        """Get artists all albums """
+        self._check_acces_token()
+        album_list, next_offset = self.get_artist_discography_and_next_offset(artist_id, limit)
+        while next_offset is not None:
+            next_albums, next_offset = self.get_artist_discography_and_next_offset(
+                artist_id, limit, next_offset)
+            album_list.extend(next_albums)
+        return album_list
+
+    def get_user_saved_albums_and_next_offset(self, limit, offset=0):
         """Get users saved albums and next query with given input """
         self._check_acces_token()
-        next_query = None
+        next_offset = None
         album_list = []
-        data = self._get_user_albums_data(limit, offset)
+        data = self._get_user_saved_albums(limit, offset)
         if data:
-            next_query = data['next']
+            next_offset = parse_next_query(data['next']) 
             for item in data['items']:
                 album_data = item['album']
                 album = Album(
                     album_data['id'], album_data['name'], album_data['artists'][0]['id'])
                 album_list.append(album)
 
-        return album_list, next_query
+        return album_list, next_offset
 
-    def get_user_artists_and_next(self, limit, offset=None):
+    def get_user_saved_artists_and_next_offset(self, limit, offset = 0):
         """Get users saved artists and next query with given input """
         self._check_acces_token()
-        next_query = None
+        next_offset = None
         artist_list = []
-        data = self._get_user_albums_data(limit, offset)
+        data = self._get_user_saved_albums(limit, offset)
         if data:
-            next_query = data['next']
+            next_offset = parse_next_query(data['next']) 
             for item in data['items']:
                 if item['album']['artists'][0]:
                     artist_data = item['album']['artists'][0]
                     if not any(a.artist_id == artist_data['id'] for a in artist_list):
                         artist = Artist(artist_data['id'], artist_data['name'])
                         artist_list.append(artist)
-        return artist_list, next_query
+        return artist_list, next_offset
 
-    def get_artist_all_albums(self, artist_id):
-        """Get artists all albums """
-        self._check_acces_token()
-        index = 0
-        limit = 50
+    def get_artist_discography_and_next_offset(self, artist_id, limit, offset = 0 ):
+        data = self._get_artist_discography(artist_id, limit, offset )
         album_list = []
-        album_list, next_query = self.get_artist_albums_and_next(
-            artist_id, limit, index)
-        while next_query is not None:
-            offset, limit = parse_next_query(next_query)
-            next_albums, next_query = self.get_artist_albums_and_next(
-                artist_id, int(limit), int(offset))
-            album_list.extend(next_albums)
-        return album_list
+        next_offset = None
+        if data:
+            for item in data['items']:
+                album_list.append(Album(item['id'], item['name']))
+            next_offset = parse_next_query(data['next']) 
+        return album_list, next_offset
+
 
 #---------Private--------------------------------------
-
 
 
     def _make_headers(self):
@@ -276,10 +255,12 @@ class Authorization(object):
 
     
 def parse_next_query(next_query):
+    if next_query is None:
+        return None
     result = urllibparse.urlparse(next_query)
     params = urllibparse.parse_qs(result.query)
-    offset, limit = params['offset'][0], params['limit'][0]
-    return limit, offset
+    offset = params['offset'][0]
+    return int(offset)
 
 def get_authorize_url(state, show_dialog):
     """ Gets the URL to use to authorize this app"""

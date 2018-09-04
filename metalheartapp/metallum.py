@@ -21,7 +21,6 @@ class AlbumType(Enum):
 API_KEY = 'f8e5cf5d-88a3-466d-8eb8-6e5f5178b8a6'
 SEARCH_URL = 'https://www.metal-archives.com/search/ajax-advanced/searching/bands'
 ALBUM_URL = 'https://www.metal-archives.com/band/discography/id/'
-BAND_URL = 'http://em.wemakesites.net/band/'
 
 
 # def search_band(keyword):
@@ -37,7 +36,7 @@ BAND_URL = 'http://em.wemakesites.net/band/'
 
 def search_band(keyword):
     """ search for band name in metal archives api """
-    payload = {'bandName': keyword, 'exactBandMatch': '1'}
+    payload = {'bandName': keyword, 'exactBandMatch': '0'}
     urlparams = urllibparse.urlencode(payload)
     response = requests.get("%s?%s" % (SEARCH_URL, urlparams))
     if response.status_code == 200:
@@ -96,27 +95,13 @@ class Album:
 class Band(object):
     """Represent a band """
 
-    def __init__(self, band_id, name, country, raw_genre, albums):
+    def __init__(self, band_id, name, country, albums, raw_genre):
         self.band_id = band_id
         self.genres = [utility.remove_redundant_chars(item) for item in raw_genre.split(',')]
         self.country = country
         self.name = utility.remove_redundant_chars(name)
         self.discography = []
         self.discography = albums
-
-
-def get_band(band_id):
-    """Get band data from metal archives and create Band object """
-    band = None
-    payload = {'api_key': API_KEY}
-    urlparams = urllibparse.urlencode(payload)
-    response = requests.get("%s?%s" % (BAND_URL + band_id, urlparams))
-    if response.status_code == 200:
-        data = response.json()['data']
-        band = Band(data['id'], data['band_name'],
-                      data['discography'], data['details']['genre'])
-    return band
-
 
 def search_and_filter_band(name):
     """ """
@@ -125,9 +110,10 @@ def search_and_filter_band(name):
     if(data is not None):
         search_results = data['aaData']
         for item in search_results:
+            if compare_artist_name(name, item['name']):
                 try:
                     discography = get_band_albums(item["id"])
-                    band = Band(item["id"], item["name"],item["country"], item["genres"], discography)
+                    band = Band(item["id"], item["name"],item["country"],  discography, item["genres"])
                     band_list.append(band)
                 except KeyError as err:
                     print("KeyError for artist: %s in key: %s" % (item['name'], err.args[0]))

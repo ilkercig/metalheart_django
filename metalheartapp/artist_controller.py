@@ -1,5 +1,7 @@
 from . import persistence
 from . import finder
+from . import spotify
+import urllib.parse as urllibparse
 
 
 class FinderResult(object):
@@ -12,8 +14,8 @@ class FinderResult(object):
     def add_artist(self,artist):
         self.artist_list.append(artist)
 
-def get_user_metal_artists(spotify_api):
-    artist_list = spotify_api.get_users_all_artists()
+def get_user_saved_metal_artists_and_next_offset(spotify_api, limit , offset):
+    artist_list, next_offset = spotify_api.get_user_saved_artists_and_next_offset(limit, offset)
     result = FinderResult()
     for artist in artist_list:
         if persistence.filter_artist(artist.artist_id):
@@ -23,7 +25,7 @@ def get_user_metal_artists(spotify_api):
             result.existing_nonmetal += 1
         else:
             genre_finder = finder.Finder(artist, spotify_api)
-            band = genre_finder.find_artist()
+            band = genre_finder.find_band()
             if(band is not None):
                 persistence.save_artist(artist, band)
                 result.saved += 1
@@ -31,8 +33,4 @@ def get_user_metal_artists(spotify_api):
             else:
                 persistence.save_nonmetal_artist(artist.artist_id ,artist.name)
                 result.saved_nonmetal +=1 
-    return result.artist_list
-            
-
-
-
+    return result.artist_list, next_offset

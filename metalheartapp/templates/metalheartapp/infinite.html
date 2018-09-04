@@ -1,0 +1,29 @@
+{% extends 'metalheartapp/base.html' %}
+
+{% block body_block %}
+  <div class="infinite-container">
+    {% for artist in artists %}
+      <div class="infinite-item">{{ artist.name }}</div>
+    {% endfor %}
+  </div>
+
+  {% if artists.has_next %}
+    <a class="infinite-more-link" href="?offset={{ artists.next_offset }}">More</a>
+  {% endif %}
+
+  <div class="loading" style="display: none;">
+    Loading...
+  </div>  
+
+  <script>
+    var infinite = new Waypoint.Infinite({
+      element: $('.infinite-container')[0],
+      onBeforePageLoad: function () {
+        $('.loading').show();
+      },
+      onAfterPageLoad: function ($items) {
+        $('.loading').hide();
+      }
+    });
+  </script>
+{% endblock %}
