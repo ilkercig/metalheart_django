@@ -36,3 +36,5 @@ def get_artist(spotify_id):
 def filter_nonmetal_artist(spotify_id):
     return NonMetalArtist.objects.filter(spotify_id = spotify_id)
     
+def get_all_genres():
+    return Genre.objects.all()

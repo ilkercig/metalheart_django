@@ -76,7 +76,8 @@ def test_ArtistAlbums(request):
 def test_UserArtists(request):
     spotify_api = spotify.Authorization(request.session)
     result = spotify_api.get_users_all_saved_artists()
-    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': result})
+    genres = artist_controller.get_all_genres()
+    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': result, "genre_list": genres})
 
 def test_UserAlbums(request):
     spotify_api = spotify.Authorization(request.session)

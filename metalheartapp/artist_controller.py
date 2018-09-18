@@ -34,3 +34,7 @@ def get_user_saved_metal_artists_and_next_offset(spotify_api, limit , offset):
                 persistence.save_nonmetal_artist(artist.artist_id ,artist.name)
                 result.saved_nonmetal +=1 
     return result.artist_list, next_offset
+
+
+def get_all_genres():
+    return persistence.get_all_genres()

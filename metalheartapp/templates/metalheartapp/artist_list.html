@@ -1,9 +1,28 @@
-{% if artist_list %}
-    <ul>
-    {% for artist in artist_list %}
-        <li><p>{{artist.name}}</p></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No artist found.</p>
-{% endif %}
+<div id = "genre-list">
+    <select id="genre-selection">
+        {% for genre in genre_list %}
+            <option value="{{genre.name}}">{{genre.name}}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div id="artist-list">
+        {% if artist_list %}
+        <ul class="list">
+        {% for artist in artist_list %}
+            <li>
+                <p class="name">{{artist.name}}</p>
+                <p class="country">{{artist.country}}</p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No artist found.</p>
+    {% endif %}
+</div>
+
+
+{% load static %}
+<script src="{% static "js/jquery-3.1.1.min.js" %}"></script>
+<script src="{% static "js/list.min.js" %}"></script>
+<script src="{% static "js/list-filter.js" %}"></script>
