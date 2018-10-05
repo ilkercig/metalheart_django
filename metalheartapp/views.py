@@ -9,6 +9,7 @@ from django.template import loader
 from . import spotify
 from . import finder
 from . import artist_controller
+from .models import ArtistSerializer, GenreSerializer
 
 from django.template.response import TemplateResponse
 
@@ -72,13 +73,6 @@ def test_ArtistAlbums(request):
     album_list = spotify_api.get_artist_all_discography("74ASZWbe4lXaubB36ztrGX")
     return TemplateResponse(request, 'metalheartapp/album_list.html', {'album_list': album_list})
 
-
-def test_UserArtists(request):
-    spotify_api = spotify.Authorization(request.session)
-    result = spotify_api.get_users_all_saved_artists()
-    genres = artist_controller.get_all_genres()
-    return TemplateResponse(request, 'metalheartapp/artist_list.html', {'artist_list': result, "genre_list": genres})
-
 def test_UserAlbums(request):
     spotify_api = spotify.Authorization(request.session)
     result = spotify_api.get_users_all_saved_albums()
@@ -87,9 +81,9 @@ def test_UserAlbums(request):
 def infinite(request):
     spotify_api = spotify.Authorization(request.session)
     offset = request.GET.get('offset', 0)
-    artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
-    artists = MyPage(artist_list, offset)
-    return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists})
+    artist_list, genre_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
+    artists = MyPage(ArtistSerializer(artist_list, many=True).data, offset)
+    return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists, 'genres':genre_list})
 
 
 class MyPage(list):

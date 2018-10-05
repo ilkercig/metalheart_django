@@ -1,7 +1,24 @@
 {% extends 'metalheartapp/base.html' %}
 
 {% block body_block %}
+
+  <div id = "genre-list">
+    <select id="genre-selection">
+        {% for genre in genres %}
+            <option value={{genre.id}}>{{genre.name}}</option>
+        {% endfor %}
+    </select>
+  </div>
+
   <div class="infinite-container">
+      <select id="genre-dropdown">
+          {% for genre in genres %}
+          <div class="infinite-item">
+            <option value={{genre.id}}>{{genre.name}}</option>
+          </div>
+
+          {% endfor %}
+      </select>
     {% for artist in artists %}
       <div class="infinite-item">{{ artist.name }}</div>
     {% endfor %}
@@ -16,6 +33,8 @@
   </div>  
 
   <script>
+    var data_from_django = "{{ artists|safe }}";
+
     var infinite = new Waypoint.Infinite({
       element: $('.infinite-container')[0],
       onBeforePageLoad: function () {
@@ -23,7 +42,20 @@
       },
       onAfterPageLoad: function ($items) {
         $('.loading').hide();
+        data_from_django = "{{ artists|safe }}"
       }
     });
   </script>
+
+<!-- <script type="text/javascript">
+    var data_from_django = "{{ artists|safe }}";
+
+$( document ).ready(function() {
+ 
+    $( "#genre-selection" ).change(function(){
+        console.log($(this).val());
+    })
+ 
+});
+</script> -->
 {% endblock %}
