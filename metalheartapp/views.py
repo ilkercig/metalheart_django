@@ -10,8 +10,24 @@ from . import spotify
 from . import finder
 from . import artist_controller
 from .models import ArtistSerializer, GenreSerializer
+from rest_framework.response import Response
+from rest_framework import status as RestStatus
+from rest_framework.decorators import api_view
+from rest_framework.renderers import JSONRenderer
+
+import json
+
+
 
 from django.template.response import TemplateResponse
+
+from rest_framework.renderers import JSONRenderer
+
+class EmberJSONRenderer(JSONRenderer):
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        data = {'next_offset': renderer_context["next_offset"], 'result': data }
+        return super(EmberJSONRenderer, self).render(data, accepted_media_type, renderer_context)
 
 AUTH_STATE = ""
 
@@ -58,30 +74,25 @@ def login(request):
     auth_url = spotify.get_authorize_url(AUTH_STATE, True)
     return HttpResponseRedirect(auth_url)
 
+@api_view(['GET'])
+def artist_list(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    if request.method == 'GET':
+        spotify_api = spotify.Authorization(request.session)
+        offset = request.GET.get('offset', 0)
+        limit = request.GET.get('limit', 30)
+        artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, limit, offset)
+        content = EmberJSONRenderer().render(ArtistSerializer(artist_list, many=True).data, renderer_context= {"next_offset": offset})
+        return Response(content, status = RestStatus.HTTP_200_OK)
+    return Response(None, status=RestStatus.HTTP_400_BAD_REQUEST)
 
-def test_FindArtist(request):
-    #TODO: Implement a test for unmatching artists
-    artist_id = "6toR2I8BssfcGNJWkL2S0W"
-    spotify_api = spotify.Authorization(request.session)
-    s_artist = spotify_api.get_artist(artist_id)
-    x = finder.Finder(s_artist, spotify_api)
-    ma_artist = x.find_band()
-    return HttpResponse(ma_artist.name)
-
-def test_ArtistAlbums(request):
-    spotify_api = spotify.Authorization(request.session)
-    album_list = spotify_api.get_artist_all_discography("74ASZWbe4lXaubB36ztrGX")
-    return TemplateResponse(request, 'metalheartapp/album_list.html', {'album_list': album_list})
-
-def test_UserAlbums(request):
-    spotify_api = spotify.Authorization(request.session)
-    result = spotify_api.get_users_all_saved_albums()
-    return TemplateResponse(request, 'metalheartapp/album_list.html', {'album_list': result})
 
 def infinite(request):
     spotify_api = spotify.Authorization(request.session)
     offset = request.GET.get('offset', 0)
-    artist_list, genre_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
+    artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
     artists = MyPage(ArtistSerializer(artist_list, many=True).data, offset)
     return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists, 'genres':genre_list})
 

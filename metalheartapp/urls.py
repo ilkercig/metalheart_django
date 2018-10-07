@@ -5,9 +5,7 @@ urlpatterns = [
     url(r'^callback', views.callback, name='callback'),
     url(r'^login', views.login, name='login'),
     url(r'^logout', views.logout, name='logout'),
-    url(r'^test_ArtistAlbums', views.test_ArtistAlbums, name='test_ArtistAlbums'),
-    url(r'^test_UserAlbums', views.test_UserAlbums, name='test_UserAlbums'),
-    url(r'^test_FindArtist', views.test_FindArtist, name='test_FindArtist'),
+    url(r'^api/user/artists', views.artist_list, name='artist_list'),
     url(r'^infinite', views.infinite, name='infinite')
 
 ]    
