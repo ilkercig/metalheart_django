@@ -35,6 +35,24 @@ def get_user_saved_metal_artists_and_next_offset(spotify_api, limit , offset):
                 result.saved_nonmetal +=1 
     return result.artist_list, next_offset
 
+def get_artists(limit, offset):
+    result = persistence.get_all_artist()
+    count = len(result)
+    start = offset
+    end = offset + limit
+    if start>count:
+        return [], None
+    elif end>=count:
+        return result[start:end], None
+    return result[start:end], end
+
+        
+    
+    
+
+
+
+
 
 def get_all_genres():
     return persistence.get_all_genres()

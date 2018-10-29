@@ -9,7 +9,7 @@ from django.template import loader
 from . import spotify
 from . import finder
 from . import artist_controller
-from .models import ArtistSerializer, GenreSerializer
+from .models import ArtistSerializer, GenreSerializer, ArtistResult, ArtistResultSerializer
 from rest_framework.response import Response
 from rest_framework import status as RestStatus
 from rest_framework.decorators import api_view
@@ -23,11 +23,6 @@ from django.template.response import TemplateResponse
 
 from rest_framework.renderers import JSONRenderer
 
-class EmberJSONRenderer(JSONRenderer):
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        data = {'next_offset': renderer_context["next_offset"], 'result': data }
-        return super(EmberJSONRenderer, self).render(data, accepted_media_type, renderer_context)
 
 AUTH_STATE = ""
 
@@ -75,17 +70,29 @@ def login(request):
     return HttpResponseRedirect(auth_url)
 
 @api_view(['GET'])
-def artist_list(request):
+def user_artist_list(request):
     """
     List all code snippets, or create a new snippet.
     """
     if request.method == 'GET':
         spotify_api = spotify.Authorization(request.session)
         offset = request.GET.get('offset', 0)
-        limit = request.GET.get('limit', 30)
+        limit = 30
         artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, limit, offset)
-        content = EmberJSONRenderer().render(ArtistSerializer(artist_list, many=True).data, renderer_context= {"next_offset": offset})
-        return Response(content, status = RestStatus.HTTP_200_OK)
+        return Response( ArtistResultSerializer(ArtistResult(artist_list, offset)).data, status = RestStatus.HTTP_200_OK)
+    return Response(None, status=RestStatus.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def artist_list(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    if request.method == 'GET':
+        offset = int(request.GET.get('offset', 0))
+        limit = 30
+        artist_list, offset = artist_controller.get_artists(limit, offset)
+        return Response( ArtistResultSerializer(ArtistResult(artist_list, offset)).data , status = RestStatus.HTTP_200_OK)
     return Response(None, status=RestStatus.HTTP_400_BAD_REQUEST)
 
 
@@ -94,7 +101,7 @@ def infinite(request):
     offset = request.GET.get('offset', 0)
     artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
     artists = MyPage(ArtistSerializer(artist_list, many=True).data, offset)
-    return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists, 'genres':genre_list})
+    return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists})
 
 
 class MyPage(list):

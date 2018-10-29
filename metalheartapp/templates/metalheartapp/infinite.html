@@ -2,23 +2,7 @@
 
 {% block body_block %}
 
-  <div id = "genre-list">
-    <select id="genre-selection">
-        {% for genre in genres %}
-            <option value={{genre.id}}>{{genre.name}}</option>
-        {% endfor %}
-    </select>
-  </div>
-
-  <div class="infinite-container">
-      <select id="genre-dropdown">
-          {% for genre in genres %}
-          <div class="infinite-item">
-            <option value={{genre.id}}>{{genre.name}}</option>
-          </div>
-
-          {% endfor %}
-      </select>
+  <div class="infinite-container">  
     {% for artist in artists %}
       <div class="infinite-item">{{ artist.name }}</div>
     {% endfor %}

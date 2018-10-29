@@ -3,3 +3,4 @@ db.sqlite3
 metalheart_0/__pycache__
 metalheartapp/__pycache__
 metalheartapp/migrations/__pycache__
+metalheartapp/static/dist

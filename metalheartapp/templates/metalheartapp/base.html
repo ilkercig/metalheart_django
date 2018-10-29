@@ -1,16 +1,26 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
     {% load static %}
     <script src="{% static "js/jquery-3.1.1.min.js" %}"></script>
     <script src="{% static "js/jquery.waypoints.min.js" %}"></script>
     <script src="{% static "js/infinite.min.js" %}"></script>
     <head>
-        <title>Metal Heart - {% block title %}How to Tango with Django!{% endblock %}</title>
-    </head>
+        <meta charset="utf-8">
+        <title>MhFirstclient</title>
+        <base href="/">
+      
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+      </head>
 
     <body>
-
+        <app-root></app-root>
+        <script type="text/javascript" src="{% static "dist/mh-firstclient/runtime.js" %}"></script>
+        <script type="text/javascript" src="{% static "dist/mh-firstclient/polyfills.js" %}"></script>
+        <script type="text/javascript" src="{% static "dist/mh-firstclient/styles.js" %}"></script>
+        <script type="text/javascript" src="{% static "dist/mh-firstclient/vendor.js" %}"></script>
+        <script type="text/javascript" src="{% static "dist/mh-firstclient/main.js" %}"></script>
             <div>
                     <ul>
                     {% if logged_in %}
