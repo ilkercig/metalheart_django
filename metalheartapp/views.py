@@ -3,26 +3,14 @@ import string
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.utils.decorators import decorator_from_middleware
-from .middleware import SpotifySessionMiddleware
 from django.template import loader
 from . import spotify
-from . import finder
 from . import artist_controller
-from .models import ArtistSerializer, GenreSerializer, ArtistResult, ArtistResultSerializer
+from .models import ArtistResult, ArtistResultSerializer
 from rest_framework.response import Response
 from rest_framework import status as RestStatus
 from rest_framework.decorators import api_view
-from rest_framework.renderers import JSONRenderer
-
-import json
-
-
-
 from django.template.response import TemplateResponse
-
-from rest_framework.renderers import JSONRenderer
-
 
 AUTH_STATE = ""
 
@@ -94,20 +82,3 @@ def artist_list(request):
         artist_list, offset = artist_controller.get_artists(limit, offset)
         return Response( ArtistResultSerializer(ArtistResult(artist_list, offset)).data , status = RestStatus.HTTP_200_OK)
     return Response(None, status=RestStatus.HTTP_400_BAD_REQUEST)
-
-
-def infinite(request):
-    spotify_api = spotify.Authorization(request.session)
-    offset = request.GET.get('offset', 0)
-    artist_list, offset = artist_controller.get_user_saved_metal_artists_and_next_offset(spotify_api, 30, offset)
-    artists = MyPage(ArtistSerializer(artist_list, many=True).data, offset)
-    return TemplateResponse(request, 'metalheartapp/infinite.html', {'artists': artists})
-
-
-class MyPage(list):
-    def __init__(self, collection, next_offset):
-        list.__init__(self, collection)
-        self.next_offset = next_offset
-    
-    def has_next(self):
-        return self.next_offset is not None

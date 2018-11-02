@@ -13,12 +13,14 @@ class SpotifySessionMiddleware(object):
         if not view_func.__name__ in self.restricted_views:
             if IsSessionActive(request.session):
                 pass
-            # else:
-            #     request.session['callback_url'] = request.path
-            #     return HttpResponseRedirect("/login") 
+            #Comment below section while developing angular client
+            else:
+                #exclude api urls
+                request.session['callback_url'] = request.path
+                return HttpResponseRedirect("/login") 
 
     def process_template_response(self, request, response):
-        if response.context_data is not None and len(response.context_data) > 0:
+        if response.context_data is not None:
             if IsSessionActive(request.session):
                 response.context_data['access_token'] = request.session["access_token"]
                 response.context_data['logged_in'] = True

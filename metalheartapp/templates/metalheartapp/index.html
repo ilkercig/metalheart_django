@@ -4,6 +4,12 @@
 
 {% block body_block %}
 <p> acces token: {{access_token}} </p>
-<a href="init">Init Metal Heart DB</a>
+<app-root></app-root>
+{% load static %}
+<script type="text/javascript" src="{% static "mh-firstclient/runtime.js" %}"></script>
+<script type="text/javascript" src="{% static "mh-firstclient/polyfills.js" %}"></script>
+<script type="text/javascript" src="{% static "mh-firstclient/styles.js" %}"></script>
+<script type="text/javascript" src="{% static "mh-firstclient/vendor.js" %}"></script>
+<script type="text/javascript" src="{% static "mh-firstclient/main.js" %}"></script>
 {% endblock %}
 

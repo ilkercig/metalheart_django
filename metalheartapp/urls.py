@@ -6,8 +6,5 @@ urlpatterns = [
     url(r'^login', views.login, name='login'),
     url(r'^logout', views.logout, name='logout'),
     url(r'^api/user/artists', views.user_artist_list, name='user_artist_list'),
-    url(r'^api/artists', views.artist_list, name='artist_list'),
-    url(r'^infinite', views.infinite, name='infinite'),
-
-
+    url(r'^api/artists', views.artist_list, name='artist_list')
 ]    
